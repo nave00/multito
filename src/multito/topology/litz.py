@@ -1,31 +1,62 @@
-"""Litz wire topology representing many thin strands for reduced skin effect losses."""
+"""Implementation of a Litz wire conductor topology.
 
-from dataclasses import dataclass, field
-from typing import Dict
+This module defines :class:`LitzTopology`, representing a bundle of thin strands
+to reduce skin effect. It computes the total cross-sectional area and returns
+metrics for optimization.
+"""
 
 from ..core.base import Topology, TopologyRegistry
+from math import pi
 
 
-@dataclass
 class LitzTopology(Topology):
-    """Simple litz wire topology with a number of strands and strand diameter."""
+    """Litz wire conductor topology."""
+
     name: str = "litz"
-    design_vars: Dict[str, float] = field(
-        default_factory=lambda: {"strand_count": 10, "strand_diameter": 0.1}
-    )
 
-    def objective(self) -> float:
-        """Compute total cross-sectional area as objective (count * diameter^2)."""
-        count = self.design_vars.get("strand_count", 10)
-        diameter = self.design_vars.get("strand_diameter", 0.1)
-        return count * (diameter ** 2)
+    # Default design variables; can be overridden by parameters passed to evaluate
+    design_variables = {
+        "strand_count": 10,
+        "strand_diameter": 0.1,
+    }
 
-    def is_feasible(self) -> bool:
-        """Check feasibility: both strand count and diameter must be positive."""
-        count = self.design_vars.get("strand_count", 0)
-        diameter = self.design_vars.get("strand_diameter", 0.0)
-        return count > 0 and diameter > 0
+    def evaluate(self, parameters):
+        """
+        Compute geometric metrics for a Litz wire conductor.
+
+        Parameters
+        ----------
+        parameters:
+            Mapping of design variable names to their values. Any missing
+            variable will fall back to the class defaults.
+
+        Returns
+        -------
+        metrics:
+            Dictionary containing the strand count, strand diameter, and total
+            cross-sectional area of all strands combined.
+        """
+        count = float(parameters.get("strand_count", self.design_variables["strand_count"]))
+        diameter = float(parameters.get("strand_diameter", self.design_variables["strand_diameter"]))
+
+        # ensure positive count and diameter
+        if count <= 0 or diameter <= 0.0:
+            return {
+                "strand_count": count,
+                "strand_diameter": diameter,
+                "total_area": 0.0,
+            }
+
+        # cross-sectional area of a single strand: pi/4 * d^2
+        strand_area = (pi / 4.0) * (diameter ** 2)
+        total_area = count * strand_area
+
+        return {
+            "strand_count": count,
+            "strand_diameter": diameter,
+            "total_area": total_area,
+        }
 
 
-# Register the topology
-TopologyRegistry.register("litz", LitzTopology)
+# Register this topology in the registry
+TopologyRegistry.register(LitzTopology)
