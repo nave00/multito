@@ -44,3 +44,23 @@ def weight_cost(context: Dict[str, Any]) -> float:
 def area_cost(context: Dict[str, Any]) -> float:
     """Return the area component from the context."""
     return context.get("area", 0.0)
+
+
+def dc_loss_cost(context: Dict[str, Any]) -> float:
+    """Return the DC resistive loss component from the context."""
+    return context.get("dc_loss", context.get("loss_dc", 0.0))
+
+
+def ac_loss_cost(context: Dict[str, Any]) -> float:
+    """Return the AC resistive loss component from the context."""
+    return context.get("ac_loss", context.get("loss_ac", 0.0))
+
+
+def temperature_cost(context: Dict[str, Any]) -> float:
+    """Return the temperature rise component from the context."""
+    return context.get("temperature", 0.0)
+
+
+def emi_cost(context: Dict[str, Any]) -> float:
+    """Return the electromagnetic interference component from the context."""
+    return context.get("emi", 0.0)
