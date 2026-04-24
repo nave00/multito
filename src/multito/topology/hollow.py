@@ -1,31 +1,60 @@
-"""Hollow topology representing a rectangular or cylindrical winding with a central void."""
+"""Implementation of a hollow cylindrical conductor topology.
 
-from dataclasses import dataclass, field
-from typing import Dict
+This module defines :class:`HollowTopology`, representing an annular cross
+section with outer and inner diameters. It computes the cross-sectional
+area and returns relevant metrics for optimization.
+"""
 
 from ..core.base import Topology, TopologyRegistry
 
 
-@dataclass
 class HollowTopology(Topology):
-    """Simple hollow topology with outer and inner diameters."""
+    """Hollow cylindrical conductor topology."""
+
     name: str = "hollow"
-    design_vars: Dict[str, float] = field(
-        default_factory=lambda: {"outer_diameter": 1.0, "inner_diameter": 0.5}
-    )
 
-    def objective(self) -> float:
-        """Compute a simple objective based on area difference (outer^2 - inner^2)."""
-        outer = self.design_vars.get("outer_diameter", 1.0)
-        inner = self.design_vars.get("inner_diameter", 0.5)
-        return outer ** 2 - inner ** 2
+    # Default design variables; can be overridden by parameters passed to evaluate
+    design_variables = {
+        "outer_diameter": 1.0,
+        "inner_diameter": 0.5,
+    }
 
-    def is_feasible(self) -> bool:
-        """Check feasibility: outer diameter must be greater than inner diameter."""
-        outer = self.design_vars.get("outer_diameter", 1.0)
-        inner = self.design_vars.get("inner_diameter", 0.5)
-        return outer > inner
+    def evaluate(self, parameters):
+        """
+        Compute geometric metrics for a hollow cylindrical conductor.
+
+        Parameters
+        ----------
+        parameters:
+            Mapping of design variable names to their values. Any missing
+            variable will fall back to the class defaults.
+
+        Returns
+        -------
+        metrics:
+            Dictionary containing the outer diameter, inner diameter, and
+            cross-sectional area of the annulus.
+        """
+        outer = float(parameters.get("outer_diameter", self.design_variables["outer_diameter"]))
+        inner = float(parameters.get("inner_diameter", self.design_variables["inner_diameter"]))
+
+        # ensure inner diameter does not exceed outer; if invalid, return empty metrics
+        if inner >= outer or inner <= 0.0:
+            return {
+                "outer_diameter": outer,
+                "inner_diameter": inner,
+                "area_annulus": 0.0,
+            }
+
+        from math import pi
+        area_annulus = (pi / 4.0) * (outer ** 2 - inner ** 2)
+
+        return {
+            "outer_diameter": outer,
+            "inner_diameter": inner,
+            "area_annulus": area_annulus,
+        }
 
 
-# Register the topology in the global registry
-TopologyRegistry.register("hollow", HollowTopology)
+# Register this topology in the registry
+TopologyRegistry.register(HollowTopology)
