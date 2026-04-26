@@ -1,34 +1,20 @@
-"""
-Spectral operators for multi-topology conductor optimization.
+""""""
+Spectral operator and transform tools for frequency-domain analysis.
 
-This module provides Fourier transforms and simple filtering operations to
-analyze design variables in the frequency domain. The functions herein
-are generic and can be applied to any numeric signal.
+This module provides basic operations to analyze design variables in
+the frequency domain. Functions herein include:
 
-Functions:
-- forward_fft(signal: Sequence[float]) -> np.ndarray: Compute 1D FFT.
+- forward_fft(signal: Sequence[float]) -> np.ndarray: Perform 1D FFT.
 - inverse_fft(spectrum: Sequence[complex]) -> np.ndarray: Compute inverse FFT.
-- low_pass_filter(spectrum, cutoff: int) -> np.ndarray: Apply low-pass.
-- high_pass_filter(spectrum, cutoff: int) -> np.ndarray: Apply high-pass.
+- low_pass_filter(spectrum: Sequence[complex], cutoff: float) -> np.ndarray: Apply low-pass.
+- high_pass_filter(spectrum: Sequence[complex], cutoff: float) -> np.ndarray: Apply high-pass.
+- spectral_operator(k: Sequence[float], epsilon: float, w0: float, k0: float) -> np.ndarray:
+  Compute the spectral operator \hat{L}(k) = -epsilon + w0 * (k0**2 - k**2)**2.
+
+These functions help analyze the spectral content of a signal and perform simple
+filters and operator evaluations on a real-valued signal.
+
 """
-
-from typing import Sequence
-import numpy as np
-
-
-def forward_fft(signal: Sequence[float]) -> np.ndarray:
-    """Compute the discrete Fourier transform of a real-valued signal.
-
-    Args:
-        signal: Sequence of real numbers representing the signal.
-
-    Returns:
-        Complex-valued numpy array containing the Fourier coefficients.
-    """
-    return np.fft.fft(signal)
-
-
-def inverse_fft(spectrum: Sequence[complex]) -> np.ndarray:
     """Compute the inverse discrete Fourier transform.
 
     Args:
@@ -71,4 +57,22 @@ def high_pass_filter(spectrum: Sequence[complex], cutoff: int) -> np.ndarray:
     # Zero out low frequencies and symmetric high-frequency counterparts
     filtered[:cutoff] = 0
     filtered[-cutoff:] = 0
-    return filtered
+    return
+    
+    def spectral_operator(k: Sequence[float], epsilon: float, w0: float, k0: float) -> np.ndarray:
+    """Compute the spectral operator \hat{L}(k) = -epsilon + w0 * (k0**2 - k**2)**2.
+
+    This operator is used in frequency-domain analyses to model spectral properties.
+
+    Args:
+        k: Sequence of wavenumbers at which to evaluate the operator.
+        epsilon: The parameter \u03B5 controlling the baseline value.
+        w0: Weight parameter w\u2080 scaling the quartic term.
+        k0: Reference wavenumber k\u2080.
+
+    Returns:
+        Numpy array of operator values evaluated at each wavenumber in `k`.
+    """
+    k_array = np.array(k, dtype=float)
+    return -epsilon + w0 * (k0**2 - k_array**2)**2
+
